@@ -4,8 +4,9 @@ import { IoCall, IoClose, IoCallSharp } from "react-icons/io5";
 import callSound from "./assets/ringtone.mp3";
 
 const socket = io("https://vidcallbackend-1.onrender.com", {
-  transports: ["websocket"],
+  transports: ["websocket", "polling"], // fallback to polling if WS fails
 });
+
 
 const App = () => {
   const [name, setName] = useState("");
