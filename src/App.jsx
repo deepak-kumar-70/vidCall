@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { IoCall, IoClose, IoCallSharp } from "react-icons/io5";
 import callSound from "./assets/ringtone.mp3";
 
-const socket = io("https://vidcallbackend-1.onrender.com", {
+const socket = io("http://localhost:3000", {
   transports: ["websocket"],
 });
 
@@ -19,8 +18,8 @@ const App = () => {
   const nameRef = useRef("");
   const remoteName = useRef("");
   const pc = useRef(null);
-  const localVideo = useRef();
-  const remoteVideo = useRef();
+  const localVideo = useRef(null);
+  const remoteVideo = useRef(null);
   const localStream = useRef(null);
   const timerRef = useRef(null);
   const ringtone = useRef(new Audio(callSound));
@@ -34,11 +33,17 @@ const App = () => {
 
   const startLocalStream = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+
       localStream.current = stream;
 
       if (localVideo.current) {
+        console.log('hello')
         localVideo.current.srcObject = stream;
+        
         localVideo.current.muted = true;
         localVideo.current.onloadedmetadata = () => {
           localVideo.current.play();
@@ -46,7 +51,7 @@ const App = () => {
       }
     } catch (error) {
       console.error("❌ Error accessing media devices:", error);
-      alert("Unable to access camera/mic. Make sure it's not being used by another app.");
+      alert("Unable to access camera/mic. Check permissions.");
     }
   };
 
@@ -65,7 +70,6 @@ const App = () => {
     };
 
     pc.current.ontrack = (e) => {
-      console.log("Track received", e.streams);
       if (remoteVideo.current) {
         remoteVideo.current.srcObject = e.streams[0];
         remoteVideo.current.onloadedmetadata = () => {
@@ -78,20 +82,19 @@ const App = () => {
       localStream.current.getTracks().forEach((track) => {
         pc.current.addTrack(track, localStream.current);
       });
-    } else {
-      console.warn("⚠️ No local stream when creating peer connection");
     }
   };
 
   const callUser = async (to) => {
     if (to === nameRef.current || isCallStarted) return;
+setIsCallStarted(true);
     remoteName.current = to;
     await startLocalStream();
     createPeerConnection(to);
-    setIsCallStarted(true);
 
     const offer = await pc.current.createOffer();
     await pc.current.setLocalDescription(offer);
+    
 
     socket.emit("call::offer", {
       to,
@@ -103,11 +106,14 @@ const App = () => {
   const acceptCall = async () => {
     ringtone.current.pause();
     ringtone.current.currentTime = 0;
+
     const { from, offer } = incomingCall;
     remoteName.current = from;
     setIncomingCall(null);
+
     await startLocalStream();
     createPeerConnection(from);
+
     await pc.current.setRemoteDescription(new RTCSessionDescription(offer));
     const answer = await pc.current.createAnswer();
     await pc.current.setLocalDescription(answer);
@@ -231,7 +237,10 @@ const App = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          <button onClick={joinRoom} className="w-full bg-blue-600 py-2 rounded hover:bg-blue-700">
+          <button
+            onClick={joinRoom}
+            className="w-full bg-blue-600 py-2 rounded hover:bg-blue-700"
+          >
             Join
           </button>
         </div>
@@ -239,12 +248,20 @@ const App = () => {
         <div className="w-full max-w-2xl space-y-4">
           {incomingCall && !isCallStarted && (
             <div className="bg-slate-800 p-4 rounded flex justify-between items-center">
-              <span>📞 Incoming call from <strong>{incomingCall.from}</strong></span>
+              <span>
+                📞 Incoming call from <strong>{incomingCall.from}</strong>
+              </span>
               <div className="flex gap-2">
-                <button onClick={acceptCall} className="bg-green-600 px-3 py-1 rounded flex items-center gap-1">
+                <button
+                  onClick={acceptCall}
+                  className="bg-green-600 px-3 py-1 rounded flex items-center gap-1"
+                >
                   <IoCallSharp /> Accept
                 </button>
-                <button onClick={rejectCall} className="bg-red-600 px-3 py-1 rounded flex items-center gap-1">
+                <button
+                  onClick={rejectCall}
+                  className="bg-red-600 px-3 py-1 rounded flex items-center gap-1"
+                >
                   <IoClose /> Reject
                 </button>
               </div>
@@ -253,12 +270,28 @@ const App = () => {
 
           {isCallStarted ? (
             <div>
-              <p className="text-center text-slate-400 mb-2">Call time: {formatTime(callTime)}</p>
+              <p className="text-center text-slate-400 mb-2">
+                Call time: {formatTime(callTime)}
+              </p>
               <div className="flex flex-col md:flex-row gap-4 items-center">
-                <video ref={localVideo} autoPlay playsInline muted className="w-full md:w-1/2 h-40 border rounded bg-black" />
-                <video ref={remoteVideo} autoPlay playsInline className="w-full md:w-1/2 h-40 border rounded bg-black" />
+                <video
+                  ref={localVideo}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full md:w-1/2 h-40 border rounded bg-black"
+                />
+                <video
+                  ref={remoteVideo}
+                  autoPlay
+                  playsInline
+                  className="w-full md:w-1/2 h-40 border rounded bg-black"
+                />
               </div>
-              <button onClick={endCall} className="mt-4 bg-red-600 px-4 py-2 rounded">
+              <button
+                onClick={endCall}
+                className="mt-4 bg-red-600 px-4 py-2 rounded"
+              >
                 End Call
               </button>
             </div>
@@ -272,7 +305,10 @@ const App = () => {
                     className="bg-slate-800 p-3 rounded flex justify-between items-center"
                   >
                     <span>{u.name}</span>
-                    <button onClick={() => callUser(u.name)} className="text-green-500 text-xl">
+                    <button
+                      onClick={() => callUser(u.name)}
+                      className="text-green-500 text-xl"
+                    >
                       <IoCall />
                     </button>
                   </div>
