@@ -42,8 +42,7 @@ const App = () => {
 
       if (localVideo.current) {
         console.log('hello')
-        localVideo.current.srcObject = stream;
-        
+        localVideo.current.srcObject = stream; 
         localVideo.current.muted = true;
         localVideo.current.onloadedmetadata = () => {
           localVideo.current.play();
@@ -55,7 +54,7 @@ const App = () => {
     }
   };
 
-  const createPeerConnection = (to) => {
+  const createPeerConnection = () => {
     pc.current = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
@@ -70,7 +69,9 @@ const App = () => {
     };
 
     pc.current.ontrack = (e) => {
+      console.log('g',remoteVideo.current)
       if (remoteVideo.current) {
+        console.log('remote',e.stream[0])
         remoteVideo.current.srcObject = e.streams[0];
         remoteVideo.current.onloadedmetadata = () => {
           remoteVideo.current.play();
@@ -87,7 +88,7 @@ const App = () => {
 
   const callUser = async (to) => {
     if (to === nameRef.current || isCallStarted) return;
-   setIsCallStarted(true);
+    setIsCallStarted(true);
     remoteName.current = to;
     await startLocalStream();
     createPeerConnection(to);
@@ -102,15 +103,17 @@ const App = () => {
       offer: pc.current.localDescription,
     });
   };
+const acceptCall = async () => {
+  ringtone.current.pause();
+  ringtone.current.currentTime = 0;
 
-  const acceptCall = async () => {
-    ringtone.current.pause();
-    ringtone.current.currentTime = 0;
+  const { from, offer } = incomingCall;
+  remoteName.current = from;
+  setIncomingCall(null);
 
-    const { from, offer } = incomingCall;
-    remoteName.current = from;
-    setIncomingCall(null);
+  setIsCallStarted(true); // 👈 set this first so video components mount
 
+  setTimeout(async () => {
     await startLocalStream();
     createPeerConnection(from);
 
@@ -124,9 +127,10 @@ const App = () => {
       answer: pc.current.localDescription,
     });
 
-    setIsCallStarted(true);
     startCallTimer();
-  };
+  }, 300); // delay gives React time to render the <video> tags
+};
+
 
   const rejectCall = () => {
     ringtone.current.pause();
