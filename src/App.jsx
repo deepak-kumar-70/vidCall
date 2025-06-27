@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { IoCall, IoClose, IoCallSharp } from "react-icons/io5";
 import callSound from "./assets/ringtone.mp3";
 
-const socket = io("http://localhost:3000", {
+const socket = io("https://vidcallbackend-1.onrender.com", {
   transports: ["websocket"],
 });
 
@@ -172,7 +172,7 @@ setIsCallStarted(true);
   const formatTime = (seconds) => {
     const m = String(Math.floor(seconds / 60)).padStart(2, "0");
     const s = String(seconds % 60).padStart(2, "0");
-    return `${m}:${s}`;
+    return ${m}:${s};
   };
 
   useEffect(() => {
