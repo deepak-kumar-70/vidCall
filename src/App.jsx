@@ -78,7 +78,7 @@ const App = () => {
     return;
   }
 
-  // Assign the stream to the remote video element once it's mounted
+ 
   const assignStream = () => {
     if (remoteVideo.current) {
       console.log("✅ Assigning remote stream to video");
@@ -89,7 +89,7 @@ const App = () => {
         );
       };
     } else {
-      setTimeout(assignStream, 100); // retry until the ref is mounted
+      setTimeout(assignStream, 100);
     }
   };
 
@@ -248,99 +248,111 @@ const acceptCall = async () => {
   }, []);
 
   return (
-    <div className="bg-slate-950 text-white h-screen w-full flex justify-center items-center p-4 overflow-auto">
-      {!user ? (
-        <div className="bg-slate-800 p-6 rounded w-full max-w-sm space-y-4">
-          <h1 className="text-2xl font-bold">🎥 Join VidCall</h1>
-          <input
-            type="text"
-            placeholder="Your name"
-            className="w-full p-2 bg-slate-700 rounded"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <button
-            onClick={joinRoom}
-            className="w-full bg-blue-600 py-2 rounded hover:bg-blue-700"
-          >
-            Join
-          </button>
-        </div>
-      ) : (
-        <div className="w-full max-w-2xl space-y-4">
-          {incomingCall && !isCallStarted && (
-            <div className="bg-slate-800 p-4 rounded flex justify-between items-center">
-              <span>
-                📞 Incoming call from <strong>{incomingCall.from}</strong>
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={acceptCall}
-                  className="bg-green-600 px-3 py-1 rounded flex items-center gap-1"
-                >
-                  <IoCallSharp /> Accept
-                </button>
-                <button
-                  onClick={rejectCall}
-                  className="bg-red-600 px-3 py-1 rounded flex items-center gap-1"
-                >
-                  <IoClose /> Reject
-                </button>
-              </div>
-            </div>
-          )}
-
-          {isCallStarted ? (
-            <div>
-              <p className="text-center text-slate-400 mb-2">
-                Call time: {formatTime(callTime)}
-              </p>
-              <div className="flex flex-col md:flex-row gap-4 items-center">
-                <video
-                  ref={localVideo}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full md:w-1/2 h-40 border rounded bg-black"
-                />
-                <video
-                  ref={remoteVideo}
-                  autoPlay
-                  playsInline
-                  className="w-full md:w-1/2 h-40 border rounded bg-black"
-                />
-              </div>
-              <button
-                onClick={endCall}
-                className="mt-4 bg-red-600 px-4 py-2 rounded"
-              >
-                End Call
-              </button>
-            </div>
-          ) : (
-            <>
-              <h2 className="text-xl font-bold">👥 Online Users</h2>
-              <div className="max-h-64 overflow-y-auto space-y-2">
-                {allUsers.map((u, i) => (
-                  <div
-                    key={i}
-                    className="bg-slate-800 p-3 rounded flex justify-between items-center"
-                  >
-                    <span>{u.name}</span>
-                    <button
-                      onClick={() => callUser(u.name)}
-                      className="text-green-500 text-xl"
-                    >
-                      <IoCall />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+   <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white h-screen w-full flex justify-center items-center p-4 overflow-auto font-sans">
+  {!user ? (
+    <div className="bg-slate-800 p-6 rounded-xl w-full max-w-sm space-y-5 shadow-lg border border-slate-700">
+      <h1 className="text-3xl font-bold text-center text-blue-400">🎥 Join VidCall</h1>
+      <input
+        type="text"
+        placeholder="Enter your name"
+        className="w-full px-4 py-2 rounded-lg bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <button
+        onClick={joinRoom}
+        className="w-full bg-blue-600 py-2 rounded-lg text-white font-semibold hover:bg-blue-700 transition"
+      >
+        Join Now
+      </button>
+    </div>
+  ) : (
+    <div className="w-full max-w-4xl space-y-4">
+      {/* Incoming Call UI */}
+      {incomingCall && !isCallStarted && (
+        <div className="bg-slate-800 p-4 rounded-xl flex justify-between items-center shadow border border-slate-700">
+          <span className="text-lg">
+            📞 <strong>{incomingCall.from}</strong> is calling...
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={acceptCall}
+              className="bg-green-600 px-4 py-2 rounded-full text-white flex items-center gap-2 hover:bg-green-700"
+            >
+              <IoCallSharp /> Accept
+            </button>
+            <button
+              onClick={rejectCall}
+              className="bg-red-600 px-4 py-2 rounded-full text-white flex items-center gap-2 hover:bg-red-700"
+            >
+              <IoClose /> Reject
+            </button>
+          </div>
         </div>
       )}
+
+      {/* Call UI */}
+      {isCallStarted ? (
+        <div className="space-y-4">
+          <p className="text-center text-slate-400">Call Time: {formatTime(callTime)}</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center">
+            <div className="relative border-2 border-blue-700 rounded-2xl overflow-hidden shadow-lg aspect-video bg-black">
+              <video
+                ref={localVideo}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+              <span className="absolute bottom-2 left-2 text-xs bg-blue-600 px-2 py-0.5 rounded text-white">You</span>
+            </div>
+            <div className="relative border-2 border-green-700 rounded-2xl overflow-hidden shadow-lg aspect-video bg-black">
+              <video
+                ref={remoteVideo}
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              <span className="absolute bottom-2 left-2 text-xs bg-green-600 px-2 py-0.5 rounded text-white">{remoteName}</span>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <button
+              onClick={endCall}
+              className="mt-4 bg-red-600 hover:bg-red-700 transition px-6 py-2 text-white rounded-full shadow-lg"
+            >
+              End Call
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <h2 className="text-xl font-bold text-blue-400">👥 Online Users</h2>
+          <div className="max-h-64 overflow-y-auto space-y-2 custom-scroll">
+            {allUsers.map((u, i) => (
+              <div
+                key={i}
+                className="bg-slate-800 p-3 rounded-lg flex justify-between items-center border border-slate-700 shadow"
+              >
+                <span className="text-white">{u.name}</span>
+                <button
+                  onClick={() => callUser(u.name)}
+                  className="text-green-500 text-2xl hover:text-green-400"
+                  title="Call"
+                >
+                  <IoCall />
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
+  )}
+</div>
+
   );
 };
 
