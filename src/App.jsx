@@ -69,26 +69,31 @@ const App = () => {
       }
     };
 
-   pc.current.ontrack = (e) => {
+ pc.current.ontrack = (e) => {
   console.log("Track event:", e);
-  if (e.streams && e.streams.length > 0) {
-    const stream = e.streams[0];
 
-    const setStream = () => {
-      if (remoteVideo.current) {
-        remoteVideo.current.srcObject = stream;
-        remoteVideo.current.onloadedmetadata = () => {
-          remoteVideo.current.play();
-        };
-      } else {
-        setTimeout(setStream, 100);
-      }
-    };
-
-    setStream();
-  } else {
-    console.warn("🚫 No stream found in ontrack event", e);
+  const remoteStream = e.streams?.[0];
+  if (!remoteStream) {
+    console.warn("No remote stream received");
+    return;
   }
+
+  // Assign the stream to the remote video element once it's mounted
+  const assignStream = () => {
+    if (remoteVideo.current) {
+      console.log("✅ Assigning remote stream to video");
+      remoteVideo.current.srcObject = remoteStream;
+      remoteVideo.current.onloadedmetadata = () => {
+        remoteVideo.current.play().catch((err) =>
+          console.error("Error playing remote video", err)
+        );
+      };
+    } else {
+      setTimeout(assignStream, 100); // retry until the ref is mounted
+    }
+  };
+
+  assignStream();
 };
 
 
