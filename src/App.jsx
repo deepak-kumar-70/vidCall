@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { IoCall, IoClose, IoCallSharp } from "react-icons/io5";
 import callSound from "./assets/ringtone.mp3"; // Must be in your src folder
 
-const socket = io("http://192.168.31.238:3000");
+const socket = io("https://render.com/docs/troubleshooting-deploys");
 
 const App = () => {
   const [name, setName] = useState("");
