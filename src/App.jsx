@@ -1,11 +1,14 @@
+// Complete and fixed responsive video call app with WebRTC
+
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { IoCall, IoClose, IoCallSharp } from "react-icons/io5";
-import callSound from "./assets/ringtone.mp3"; // Must be in your src folder
+import callSound from "./assets/ringtone.mp3";
 
 const socket = io("https://vidcallbackend-1.onrender.com", {
-  transports: ['websocket'],
+  transports: ["websocket"],
 });
+
 const App = () => {
   const [name, setName] = useState("");
   const [user, setUser] = useState(null);
@@ -13,6 +16,7 @@ const App = () => {
   const [incomingCall, setIncomingCall] = useState(null);
   const [isCallStarted, setIsCallStarted] = useState(false);
   const [callTime, setCallTime] = useState(0);
+  const [loadingStream, setLoadingStream] = useState(false);
 
   const nameRef = useRef("");
   const remoteName = useRef("");
@@ -30,21 +34,23 @@ const App = () => {
     setUser(name);
   };
 
-const startLocalStream = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    localStream.current = stream;
-    if (localVideo.current) {
-      localVideo.current.srcObject = stream;
-      localVideo.current.muted = true;
-      localVideo.current.play();
+  const startLocalStream = async () => {
+    setLoadingStream(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localStream.current = stream;
+      if (localVideo.current) {
+        localVideo.current.srcObject = stream;
+        localVideo.current.muted = true;
+        localVideo.current.play();
+      }
+    } catch (error) {
+      alert("❌ Unable to access camera/mic. Make sure it's not being used by another app.");
+      console.error("Media access error:", error);
+    } finally {
+      setLoadingStream(false);
     }
-  } catch (error) {
-    console.error("❌ Error accessing media devices:", error);
-    alert("Unable to access camera/mic. Make sure it's not being used by another app.");
-  }
-};
-
+  };
 
   const createPeerConnection = (to) => {
     pc.current = new RTCPeerConnection({
@@ -61,7 +67,9 @@ const startLocalStream = async () => {
     };
 
     pc.current.ontrack = (e) => {
-      remoteVideo.current.srcObject = e.streams[0];
+      if (remoteVideo.current) {
+        remoteVideo.current.srcObject = e.streams[0];
+      }
     };
 
     if (localStream.current) {
@@ -72,6 +80,7 @@ const startLocalStream = async () => {
   };
 
   const callUser = async (to) => {
+    if (to === nameRef.current || isCallStarted) return;
     remoteName.current = to;
     await startLocalStream();
     createPeerConnection(to);
@@ -83,12 +92,13 @@ const startLocalStream = async () => {
     socket.emit("call::offer", {
       to,
       from: nameRef.current,
-      offer,
+      offer: pc.current.localDescription,
     });
   };
 
   const acceptCall = async () => {
     ringtone.current.pause();
+    ringtone.current.currentTime = 0;
     const { from, offer } = incomingCall;
     remoteName.current = from;
     setIncomingCall(null);
@@ -101,7 +111,7 @@ const startLocalStream = async () => {
     socket.emit("call::answer", {
       to: from,
       from: nameRef.current,
-      answer,
+      answer: pc.current.localDescription,
     });
 
     setIsCallStarted(true);
@@ -110,6 +120,7 @@ const startLocalStream = async () => {
 
   const rejectCall = () => {
     ringtone.current.pause();
+    ringtone.current.currentTime = 0;
     if (incomingCall?.from) {
       socket.emit("call::reject", { to: incomingCall.from });
     }
@@ -124,10 +135,9 @@ const startLocalStream = async () => {
   };
 
   const cleanUpCall = () => {
-    if (pc.current) {
-      pc.current.close();
-      pc.current = null;
-    }
+    if (pc.current) pc.current.close();
+    pc.current = null;
+    remoteName.current = "";
 
     if (localStream.current) {
       localStream.current.getTracks().forEach((t) => t.stop());
@@ -163,6 +173,7 @@ const startLocalStream = async () => {
 
     socket.on("call::offer", ({ from, offer }) => {
       ringtone.current.loop = true;
+      ringtone.current.currentTime = 0;
       ringtone.current.play();
       setIncomingCall({ from, offer });
     });
@@ -205,7 +216,7 @@ const startLocalStream = async () => {
   }, []);
 
   return (
-    <div className="bg-slate-950 text-white h-screen w-full flex justify-center items-center p-4">
+    <div className="bg-slate-950 text-white h-screen w-full flex justify-center items-center p-4 overflow-auto">
       {!user ? (
         <div className="bg-slate-800 p-6 rounded w-full max-w-sm space-y-4">
           <h1 className="text-2xl font-bold">🎥 Join VidCall</h1>
@@ -239,9 +250,9 @@ const startLocalStream = async () => {
           {isCallStarted ? (
             <div>
               <p className="text-center text-slate-400 mb-2">Call time: {formatTime(callTime)}</p>
-              <div className="flex gap-4">
-                <video ref={localVideo} autoPlay muted className="w-64 h-40 border rounded" />
-                <video ref={remoteVideo} autoPlay className="w-64 h-40 border rounded" />
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                <video ref={localVideo} autoPlay muted className="w-full md:w-1/2 h-40 border rounded" />
+                <video ref={remoteVideo} autoPlay className="w-full md:w-1/2 h-40 border rounded" />
               </div>
               <button onClick={endCall} className="mt-4 bg-red-600 px-4 py-2 rounded">
                 End Call
@@ -250,9 +261,9 @@ const startLocalStream = async () => {
           ) : (
             <>
               <h2 className="text-xl font-bold">👥 Online Users</h2>
-              <ul className="space-y-2">
+              <div className="max-h-64 overflow-y-auto space-y-2">
                 {allUsers.map((u, i) => (
-                  <li
+                  <div
                     key={i}
                     className="bg-slate-800 p-3 rounded flex justify-between items-center"
                   >
@@ -260,9 +271,9 @@ const startLocalStream = async () => {
                     <button onClick={() => callUser(u.name)} className="text-green-500 text-xl">
                       <IoCall />
                     </button>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </>
           )}
         </div>
