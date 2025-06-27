@@ -41,7 +41,7 @@ const App = () => {
       localStream.current = stream;
 
       if (localVideo.current) {
-        console.log('hello kdk')
+        console.log('hello')
         localVideo.current.srcObject = stream;
         
         localVideo.current.muted = true;
@@ -87,7 +87,7 @@ const App = () => {
 
   const callUser = async (to) => {
     if (to === nameRef.current || isCallStarted) return;
-setIsCallStarted(true);
+   setIsCallStarted(true);
     remoteName.current = to;
     await startLocalStream();
     createPeerConnection(to);
@@ -172,7 +172,7 @@ setIsCallStarted(true);
   const formatTime = (seconds) => {
     const m = String(Math.floor(seconds / 60)).padStart(2, "0");
     const s = String(seconds % 60).padStart(2, "0");
-    return ${m}:${s};
+    return `${m}:${s}`;
   };
 
   useEffect(() => {
