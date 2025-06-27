@@ -1,4 +1,3 @@
-// Complete and fixed responsive video call app with WebRTC
 
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
@@ -16,7 +15,6 @@ const App = () => {
   const [incomingCall, setIncomingCall] = useState(null);
   const [isCallStarted, setIsCallStarted] = useState(false);
   const [callTime, setCallTime] = useState(0);
-  const [loadingStream, setLoadingStream] = useState(false);
 
   const nameRef = useRef("");
   const remoteName = useRef("");
@@ -35,20 +33,20 @@ const App = () => {
   };
 
   const startLocalStream = async () => {
-    setLoadingStream(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStream.current = stream;
+
       if (localVideo.current) {
         localVideo.current.srcObject = stream;
         localVideo.current.muted = true;
-        localVideo.current.play();
+        localVideo.current.onloadedmetadata = () => {
+          localVideo.current.play();
+        };
       }
     } catch (error) {
-      alert("❌ Unable to access camera/mic. Make sure it's not being used by another app.");
-      console.error("Media access error:", error);
-    } finally {
-      setLoadingStream(false);
+      console.error("❌ Error accessing media devices:", error);
+      alert("Unable to access camera/mic. Make sure it's not being used by another app.");
     }
   };
 
@@ -67,8 +65,12 @@ const App = () => {
     };
 
     pc.current.ontrack = (e) => {
+      console.log("Track received", e.streams);
       if (remoteVideo.current) {
         remoteVideo.current.srcObject = e.streams[0];
+        remoteVideo.current.onloadedmetadata = () => {
+          remoteVideo.current.play();
+        };
       }
     };
 
@@ -76,6 +78,8 @@ const App = () => {
       localStream.current.getTracks().forEach((track) => {
         pc.current.addTrack(track, localStream.current);
       });
+    } else {
+      console.warn("⚠️ No local stream when creating peer connection");
     }
   };
 
@@ -251,8 +255,8 @@ const App = () => {
             <div>
               <p className="text-center text-slate-400 mb-2">Call time: {formatTime(callTime)}</p>
               <div className="flex flex-col md:flex-row gap-4 items-center">
-                <video ref={localVideo} autoPlay muted className="w-full md:w-1/2 h-40 border rounded" />
-                <video ref={remoteVideo} autoPlay className="w-full md:w-1/2 h-40 border rounded" />
+                <video ref={localVideo} autoPlay playsInline muted className="w-full md:w-1/2 h-40 border rounded bg-black" />
+                <video ref={remoteVideo} autoPlay playsInline className="w-full md:w-1/2 h-40 border rounded bg-black" />
               </div>
               <button onClick={endCall} className="mt-4 bg-red-600 px-4 py-2 rounded">
                 End Call
