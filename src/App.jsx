@@ -314,7 +314,7 @@ const acceptCall = async () => {
                 playsInline
                 className="w-full h-full object-cover"
               />
-              <span className="absolute bottom-2 left-2 text-xs bg-green-600 px-2 py-0.5 rounded text-white">{remoteName}</span>
+              <span className="absolute bottom-2 left-2 text-xs bg-green-600 px-2 py-0.5 rounded text-white">{remoteName.current}</span>
             </div>
           </div>
 
