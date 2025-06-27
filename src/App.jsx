@@ -3,8 +3,9 @@ import { io } from "socket.io-client";
 import { IoCall, IoClose, IoCallSharp } from "react-icons/io5";
 import callSound from "./assets/ringtone.mp3"; // Must be in your src folder
 
-const socket = io("https://render.com/docs/troubleshooting-deploys");
-
+const socket = io("https://render.com/docs/troubleshooting-deploys", {
+  transports: ['websocket'],
+});
 const App = () => {
   const [name, setName] = useState("");
   const [user, setUser] = useState(null);
