@@ -41,7 +41,7 @@ const App = () => {
       localStream.current = stream;
 
       if (localVideo.current) {
-        console.log('hello kk')
+        console.log('hello kdk')
         localVideo.current.srcObject = stream;
         
         localVideo.current.muted = true;
