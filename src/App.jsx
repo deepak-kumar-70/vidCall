@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { IoCall, IoClose, IoCallSharp } from "react-icons/io5";
 import callSound from "./assets/ringtone.mp3"; // Must be in your src folder
 
-const socket = io("https://render.com/docs/troubleshooting-deploys", {
+const socket = io("https://vidcallbackend-1.onrender.com", {
   transports: ['websocket'],
 });
 const App = () => {
