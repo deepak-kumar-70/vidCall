@@ -69,16 +69,28 @@ const App = () => {
       }
     };
 
-    pc.current.ontrack = (e) => {
-      console.log('g',remoteVideo.current)
+   pc.current.ontrack = (e) => {
+  console.log("Track event:", e);
+  if (e.streams && e.streams.length > 0) {
+    const stream = e.streams[0];
+
+    const setStream = () => {
       if (remoteVideo.current) {
-        console.log('remote',e.stream[0])
-        remoteVideo.current.srcObject = e.streams[0];
+        remoteVideo.current.srcObject = stream;
         remoteVideo.current.onloadedmetadata = () => {
           remoteVideo.current.play();
         };
+      } else {
+        setTimeout(setStream, 100);
       }
     };
+
+    setStream();
+  } else {
+    console.warn("🚫 No stream found in ontrack event", e);
+  }
+};
+
 
     if (localStream.current) {
       localStream.current.getTracks().forEach((track) => {
